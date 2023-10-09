@@ -1,16 +1,29 @@
+"use client";
 import { Hero, SearchBar, CustomFilter, CarCard } from "@/components";
-import Image from "next/image";
 import { fetchCars } from "@/utils";
 import { fuels, yearsOfProduction } from "@/constants";
+import { useState, useEffect } from "react";
 
-export default async function Home({ searchParams }: { searchParams: any }) {
-  const allCars = await fetchCars({
-    manufacturer: searchParams.manufacturer || "",
-    year: searchParams.year || 2023,
-    fuel: searchParams.fuel || "",
-    limit: searchParams.limit || 10,
-    model: searchParams.model || "",
-  });
+export default function Home({ searchParams }: { searchParams: any }) {
+  const [allCars, setAllCars] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const getCars = async () => {
+    setLoading(true);
+    const cars = await fetchCars({
+      manufacturer: searchParams.manufacturer || "",
+      year: searchParams.year || 2023,
+      fuel: searchParams.fuel || "",
+      limit: searchParams.limit || 10,
+      model: searchParams.model || "",
+    });
+    setAllCars(cars);
+    setLoading(false);
+  };
+  useEffect(() => {
+    getCars();
+  }, [searchParams]);
+
   return (
     <main className="overflow-hidden">
       <Hero />
@@ -28,16 +41,23 @@ export default async function Home({ searchParams }: { searchParams: any }) {
         </div>
         <section>
           <div className="home__cars-wrapper">
-            {Array.isArray(allCars) && allCars.length !== 0 ? (
-              allCars.map((car) => <CarCard car={car} />)
-            ) : (
-              <div className="home__error-container">
-                <h2 className="text-black text-xl font-bold">
-                  Oops, no results
-                </h2>
-                <p>{allCars?.message}</p>
+            {loading && (
+              <div className="min-w-[900px] flex items-center justify-center ">
+                <div
+                  className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] text-primary motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                  role="status"
+                ></div>
               </div>
             )}
+            {!loading && Array.isArray(allCars) && allCars.length !== 0
+              ? allCars.map((car) => <CarCard car={car} />)
+              : !loading && (
+                  <div className="home__error-container">
+                    <h2 className="text-black text-xl font-bold">
+                      Oops, no results
+                    </h2>
+                  </div>
+                )}
           </div>
         </section>
       </div>
